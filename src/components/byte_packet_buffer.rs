@@ -56,7 +56,7 @@ impl BytePacketBuffer {
         Ok(&self.buffer[start..start + end as usize])
     }
 
-    fn read_u16(&mut self) -> Result<u16, Box<dyn Error>> {
+    pub fn read_u16(&mut self) -> Result<u16, Box<dyn Error>> {
         let result = ((self.read()? as u16) << 8) | (self.read()? as u16);
 
         Ok(result)

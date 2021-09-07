@@ -5,6 +5,7 @@ use std::io::Read;
 pub use self::components::*;
 
 mod components;
+mod types;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut response_packet = File::open("../packets/response_packet.txt")?;
