@@ -66,7 +66,7 @@ impl BytePacketBuffer {
         let result = ((self.read()? as u32) << 24)
             | ((self.read()? as u32) << 16)
             | ((self.read()? as u32) << 8)
-            | ((self.read()? as u32) << 8);
+            | ((self.read()? as u32) << 0);
 
         Ok(result)
     }
