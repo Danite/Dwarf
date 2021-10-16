@@ -3,7 +3,7 @@ use crate::types::ResultCode;
 use std::error::Error;
 
 #[derive(Clone, Debug)]
-pub struct DNSHeader {
+pub struct DnsHeader {
     pub id: u16,
 
     pub recursion_desired: bool,
@@ -24,7 +24,7 @@ pub struct DNSHeader {
     pub resource_entries: u16,
 }
 
-impl DNSHeader {
+impl DnsHeader {
     pub fn new() -> Self {
         Self {
             id: 0,

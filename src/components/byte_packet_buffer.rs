@@ -17,7 +17,7 @@ impl BytePacketBuffer {
         self.position
     }
 
-    fn step(&mut self, step: usize) -> Result<(), Box<dyn Error>> {
+    pub fn step(&mut self, step: usize) -> Result<(), Box<dyn Error>> {
         self.position += step;
 
         Ok(())
@@ -62,7 +62,7 @@ impl BytePacketBuffer {
         Ok(result)
     }
 
-    fn read_u32(&mut self) -> Result<u32, Box<dyn Error>> {
+    pub fn read_u32(&mut self) -> Result<u32, Box<dyn Error>> {
         let result = ((self.read()? as u32) << 24)
             | ((self.read()? as u32) << 16)
             | ((self.read()? as u32) << 8)
