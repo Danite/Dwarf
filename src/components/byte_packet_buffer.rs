@@ -71,7 +71,7 @@ impl BytePacketBuffer {
         Ok(result)
     }
 
-    fn read_qname(&mut self, outstr: &mut String) -> Result<(), Box<dyn Error>> {
+    pub fn read_qname(&mut self, outstr: &mut String) -> Result<(), Box<dyn Error>> {
         let mut local_position = self.position();
 
         let mut has_jumped = false;
