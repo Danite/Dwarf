@@ -124,4 +124,37 @@ impl BytePacketBuffer {
 
         Ok(())
     }
+
+    fn write(&mut self, val: u8) -> Result<(), Box<dyn Error>> {
+        if self.position >= 512 {
+            return Err("End of buffer".into());
+        }
+
+        self.buffer[self.position] = val;
+        self.position += 1;
+
+        Ok(())
+    }
+
+    pub fn write_u8(&mut self, val: u8) -> Result<(), Box<dyn Error>> {
+        self.write(val)?;
+
+        Ok(())
+    }
+
+    pub fn write_u16(&mut self, val: u16) -> Result<(), Box<dyn Error>> {
+        self.write((val >> 8) as u8)?;
+        self.write((val & 0xFF) as u8)?;
+
+        Ok(())
+    }
+
+    pub fn write_u32(&mut self, val: u32) -> Result<(), Box<dyn Error>> {
+        self.write(((val >> 24) & 0xFF) as u8)?;
+        self.write(((val >> 16) & 0xFF) as u8)?;
+        self.write(((val >> 8) & 0xFF) as u8)?;
+        self.write(((val >> 0) & 0xFF) as u8)?;
+
+        Ok(())
+    }
 }

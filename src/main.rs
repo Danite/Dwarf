@@ -24,12 +24,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{:#?}", answer_record);
     }
 
-    for authorities_record in packet.authorities {
-        println!("{:#?}", authorities_record);
+    for authority_record in packet.authorities {
+        println!("{:#?}", authority_record);
     }
 
-    for resources_record in packet.resources {
-        println!("{:#?}", resources_record);
+    for resource_record in packet.resources {
+        println!("{:#?}", resource_record);
     }
 
     Ok(())
