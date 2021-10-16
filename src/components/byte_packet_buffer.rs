@@ -157,4 +157,21 @@ impl BytePacketBuffer {
 
         Ok(())
     }
+
+    pub fn write_qname(&mut self, qname: &str) -> Result<(), Box<dyn Error>> {
+        for label in qname.split(".") {
+            let length = label.len();
+
+            if length > 0x3f {
+                return Err("Single label exceeded 63 characters of length".into());
+            }
+
+            self.write_u8(length as u8)?;
+            for byte in label.as_bytes() {
+                self.write_u8(*byte)?;
+            }
+        }
+
+        Ok(())
+    }
 }
