@@ -13,7 +13,7 @@ impl BytePacketBuffer {
         }
     }
 
-    fn position(&self) -> usize {
+    pub fn position(&self) -> usize {
         self.position
     }
 
