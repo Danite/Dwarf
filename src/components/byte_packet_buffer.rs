@@ -56,6 +56,19 @@ impl BytePacketBuffer {
         Ok(&self.buffer[start..start + end as usize])
     }
 
+    fn set(&mut self, position: usize, val: u8) -> Result<(), Box<dyn Error>> {
+        self.buffer[position] = val;
+
+        Ok(())
+    }
+
+    pub fn set_u16(&mut self, position: usize, val: u16) -> Result<(), Box<dyn Error>> {
+        self.set(position, (val >> 8) as u8)?;
+        self.set(position + 1, (val & 0xFF) as u8)?;
+
+        Ok(())
+    }
+
     pub fn read_u16(&mut self) -> Result<u16, Box<dyn Error>> {
         let result = ((self.read()? as u16) << 8) | (self.read()? as u16);
 
