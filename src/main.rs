@@ -8,7 +8,7 @@ mod components;
 mod types;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let qname = "google.com";
+    let qname = "www.yahoo.com";
     let qtype = QueryType::A;
 
     let server = ("8.8.8.8", 53);
