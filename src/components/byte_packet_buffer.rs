@@ -172,6 +172,8 @@ impl BytePacketBuffer {
             }
         }
 
+        self.write_u8(0)?;
+
         Ok(())
     }
 }

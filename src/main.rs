@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     socket.recv_from(&mut res_buffer.buffer)?;
 
     let res_packet = DnsPacket::from_buffer(&mut res_buffer)?;
-    println!("{:#?}", res_packet);
+    println!("{:#?}", res_packet.header);
 
     for question in res_packet.questions {
         println!("{:#?}", question);
