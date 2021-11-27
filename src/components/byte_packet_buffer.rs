@@ -48,7 +48,7 @@ impl BytePacketBuffer {
         Ok(self.buffer[position])
     }
 
-    fn get_range(&self, start: usize, end: usize) -> Result<&[u8], Box<dyn Error>> {
+    pub fn get_range(&self, start: usize, end: usize) -> Result<&[u8], Box<dyn Error>> {
         if self.position >= 512 {
             return Err("Emd of buffer".into());
         }

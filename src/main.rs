@@ -7,10 +7,7 @@ pub use self::types::*;
 mod components;
 mod types;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let qname = "yahoo.com";
-    let qtype = QueryType::MX;
-
+fn lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
     let server = ("8.8.8.8", 53);
 
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?; // arbitrary port
@@ -32,24 +29,68 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut res_buffer = BytePacketBuffer::new();
     socket.recv_from(&mut res_buffer.buffer)?;
 
-    let res_packet = DnsPacket::from_buffer(&mut res_buffer)?;
-    println!("{:#?}", res_packet.header);
+    DnsPacket::from_buffer(&mut res_buffer)
+}
 
-    for question in res_packet.questions {
-        println!("{:#?}", question);
+fn handle_query(socket: &UdpSocket) -> Result<(), Box<dyn Error>> {
+    let mut req_buffer = BytePacketBuffer::new();
+
+    let (_, src) = socket.recv_from(&mut req_buffer.buffer)?;
+
+    let mut request = DnsPacket::from_buffer(&mut req_buffer)?;
+
+    let mut packet = DnsPacket::new();
+    packet.header.id = request.header.id;
+    packet.header.recursion_desired = true;
+    packet.header.recursion_available = true;
+    packet.header.response = true;
+
+    if let Some(question) = request.questions.pop() {
+        println!("Received query: {:?}", question);
+
+        if let Ok(result) = lookup(&question.name, question.qtype) {
+            packet.questions.push(question);
+            packet.header.rescode = result.header.rescode;
+
+            for answer_record in result.answers {
+                println!("Answer: {:#?}", answer_record);
+                packet.answers.push(answer_record);
+            }
+
+            for authority_record in result.authorities {
+                println!("Authority: {:#?}", authority_record);
+                packet.authorities.push(authority_record);
+            }
+
+            for resource_record in result.resources {
+                println!("Resource: {:#?}", resource_record);
+                packet.resources.push(resource_record);
+            }
+        } else {
+            packet.header.rescode = ResultCode::SERVFAIL
+        }
+    } else {
+        packet.header.rescode = ResultCode::FORMERR;
     }
 
-    for answer_record in res_packet.answers {
-        println!("{:#?}", answer_record);
-    }
+    let mut res_buffer = BytePacketBuffer::new();
+    packet.write(&mut res_buffer)?;
 
-    for authority_record in res_packet.authorities {
-        println!("{:#?}", authority_record);
-    }
+    let length = res_buffer.position();
+    let data = res_buffer.get_range(0, length)?;
 
-    for resource_record in res_packet.resources {
-        println!("{:#?}", resource_record);
-    }
+    socket.send_to(data, src)?;
 
     Ok(())
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
+
+    loop {
+        match handle_query(&socket) {
+            Ok(_) => {}
+            Err(error) => eprintln!("An error ocurred: {}", error),
+        }
+    }
 }
