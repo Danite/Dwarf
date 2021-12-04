@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::net::UdpSocket;
+use std::net::{Ipv4Addr, UdpSocket};
 
 pub use self::components::*;
 pub use self::types::*;
@@ -7,9 +7,11 @@ pub use self::types::*;
 mod components;
 mod types;
 
-fn lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
-    let server = ("8.8.8.8", 53);
-
+fn lookup(
+    qname: &str,
+    qtype: QueryType,
+    server: (Ipv4Addr, u16),
+) -> Result<DnsPacket, Box<dyn Error>> {
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?; // arbitrary port
 
     let mut packet = DnsPacket::new();
@@ -32,6 +34,47 @@ fn lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
     DnsPacket::from_buffer(&mut res_buffer)
 }
 
+// TODO: refactor
+fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
+    // *a.root-servers.net*
+    let mut ns = "198.41.0.4".parse::<Ipv4Addr>().unwrap();
+
+    loop {
+        println!("attempting lookup of {:?} {} with ns {}", qtype, qname, ns);
+
+        let ns_copy = ns;
+
+        let server = (ns_copy, 53);
+        let response = lookup(qname, qtype, server)?;
+
+        if !response.answers.is_empty() && response.header.rescode == ResultCode::NOERROR {
+            return Ok(response);
+        }
+
+        if response.header.rescode == ResultCode::NXDOMAIN {
+            return Ok(response);
+        }
+
+        if let Some(new_ns) = response.get_resolved_ns(qname) {
+            ns = new_ns;
+            continue;
+        }
+
+        let new_ns_name = match response.get_unresolved_ns(qname) {
+            Some(ns) => ns,
+            None => return Ok(response),
+        };
+
+        let recursive_response = recursive_lookup(&new_ns_name, QueryType::A)?;
+
+        if let Some(new_ns) = recursive_response.get_random_a_record() {
+            ns = new_ns;
+        } else {
+            return Ok(response);
+        }
+    }
+}
+
 fn handle_query(socket: &UdpSocket) -> Result<(), Box<dyn Error>> {
     let mut req_buffer = BytePacketBuffer::new();
 
@@ -48,8 +91,8 @@ fn handle_query(socket: &UdpSocket) -> Result<(), Box<dyn Error>> {
     if let Some(question) = request.questions.pop() {
         println!("Received query: {:?}", question);
 
-        if let Ok(result) = lookup(&question.name, question.qtype) {
-            packet.questions.push(question);
+        if let Ok(result) = recursive_lookup(&question.name, question.qtype) {
+            packet.questions.push(question.clone());
             packet.header.rescode = result.header.rescode;
 
             for answer_record in result.answers {
